@@ -1,0 +1,7 @@
+{
+  "name": "Global Explorer Maps",
+  "description": "A collaborative map application to manage custom location lists, powered by Gemini with Google Maps grounding for precise location search.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
