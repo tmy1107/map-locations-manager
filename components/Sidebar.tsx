@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { LocationList, Location } from '../types';
 
 interface SidebarProps {
@@ -9,6 +9,7 @@ interface SidebarProps {
   onAddList: (name: string, icon: string) => void;
   onEditList: (id: string, name: string, icon: string) => void;
   onRemoveList: (id: string) => void;
+  onImportLists: (lists: LocationList[]) => void;
   onAddLocation: (listId: string) => void;
   onRemoveLocation: (listId: string, locationId: string) => void;
 }
@@ -20,6 +21,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onAddList,
   onEditList,
   onRemoveList,
+  onImportLists,
   onAddLocation,
   onRemoveLocation
 }) => {
@@ -29,6 +31,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [editingListId, setEditingListId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [editIcon, setEditIcon] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleAddSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,6 +54,48 @@ const Sidebar: React.FC<SidebarProps> = ({
       onEditList(editingListId, editName.trim(), editIcon);
       setEditingListId(null);
     }
+  };
+
+  const handleExport = () => {
+    const dataStr = JSON.stringify(lists, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+    
+    const exportFileDefaultName = 'map_locations_export.json';
+    
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+    linkElement.remove();
+  };
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const json = JSON.parse(event.target?.result as string);
+        if (Array.isArray(json)) {
+          // Basic validation could be improved here
+          onImportLists(json);
+          alert('Import successful!');
+        } else {
+          alert('Invalid file format. Please import a JSON array of lists.');
+        }
+      } catch (error) {
+        console.error('Import error:', error);
+        alert('Failed to parse JSON file.');
+      }
+    };
+    reader.readAsText(file);
+    // Reset file input so same file can be imported again if needed
+    e.target.value = '';
   };
 
   const icons = ['📍', '⭐', '🏠', '✈️', '🍔', '🌳', '🏢', '🏛️', '⛰️', '🏖️', '🍿', '🚲'];
@@ -222,8 +267,37 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
       
-      <div className="p-4 bg-slate-50 text-[10px] text-slate-400 text-center uppercase tracking-widest border-t border-slate-100">
-        Powered by Gemini & Google Maps
+      <div className="p-4 bg-slate-50 border-t border-slate-100 flex flex-col gap-2">
+        <div className="flex gap-2">
+          <button 
+            onClick={handleExport}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Export JSON
+          </button>
+          <button 
+            onClick={handleImportClick}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            </svg>
+            Import JSON
+          </button>
+        </div>
+        <input 
+          type="file" 
+          ref={fileInputRef} 
+          className="hidden" 
+          accept=".json" 
+          onChange={handleFileChange} 
+        />
+        <div className="text-[10px] text-slate-400 text-center uppercase tracking-widest mt-1">
+          Powered by Gemini & Google Maps
+        </div>
       </div>
     </div>
   );

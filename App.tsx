@@ -72,6 +72,15 @@ const App: React.FC = () => {
     if (activeListId === id) setActiveListId(null);
   };
 
+  const handleImportLists = (newLists: LocationList[]) => {
+    setLists(newLists);
+    if (newLists.length > 0) {
+      setActiveListId(newLists[0].id);
+    } else {
+      setActiveListId(null);
+    }
+  };
+
   const handleAddLocation = (listId: string) => {
     setActiveListId(listId);
     setIsSearchOpen(true);
@@ -122,6 +131,7 @@ const App: React.FC = () => {
         onAddList={handleAddList}
         onEditList={handleEditList}
         onRemoveList={handleRemoveList}
+        onImportLists={handleImportLists}
         onAddLocation={handleAddLocation}
         onRemoveLocation={handleRemoveLocation}
       />
